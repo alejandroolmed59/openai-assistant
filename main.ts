@@ -26,13 +26,21 @@ const createThread = async (): Promise<Thread> => {
 };
 
 const createRun = async (assistantId: string, threadId: string) => {
-  const run = await openai.beta.threads.runs.createAndPoll(threadId, {
-    assistant_id: assistantId,
-  });
+  const startTime = Date.now();
+  const run = await openai.beta.threads.runs.createAndPoll(
+    threadId,
+    {
+      assistant_id: assistantId,
+      parallel_tool_calls: true,
+    },
+    { pollIntervalMs: 500 }
+  );
+  const endTime = Date.now();
+  console.log(`elapsed in run creation and polling ${endTime - startTime}`);
   return run;
 };
 
-async function main2() {
+async function main() {
   const myAssistant = await getAssistant();
   const thread = await createThread();
   const threadMessages = await openai.beta.threads.messages.create(thread.id, {
@@ -49,13 +57,22 @@ async function main2() {
       if (openAiFunction.function.name === "update_device") {
         const args: {
           deviceId: string;
-          changingProperty: { propertyKey: string; propertyValue: string };
+          changingProperties: { propertyKey: string; propertyValue: string }[];
         } = JSON.parse(openAiFunction.function.arguments);
         const deviceChanging = newStateOfDevices.find(
           (device) => Number(device.id) === Number(args.deviceId)
         );
-        deviceChanging!.deviceProperties[args.changingProperty.propertyKey] =
-          args.changingProperty.propertyValue;
+        if (!deviceChanging)
+          return {
+            tool_call_id: openAiFunction.id,
+            output: JSON.stringify({
+              message: "error, device not found",
+            }),
+          };
+        for (const changingProperty of args.changingProperties) {
+          deviceChanging.deviceProperties[changingProperty.propertyKey] =
+            changingProperty.propertyValue;
+        }
         return {
           tool_call_id: openAiFunction.id,
           output: JSON.stringify({
@@ -92,22 +109,30 @@ async function main2() {
         tool_outputs: mappedFunctions,
       }
     );
-    console.log(submitOutput);
+    const threadMessages = await openai.beta.threads.messages.list(thread.id);
+    for (const message of threadMessages.data) {
+      console.log(message.content);
+    }
+    debugger;
   } else {
     console.log(run.status);
   }
 }
 
-async function main() {
+export async function main2() {
+  //const threadId = "thread_Ms5HglSVX3bc2ccMZC2nEY6m";
+  //const newMessage = await openai.beta.threads.messages.create(threadId, {
+  //  role: "user",
+  //  content: "Also I'd like to change the color to red for my smartbulb",
+  //  //"Thanks for that!, can you change the mode to COOL and also turn off all my smartplugs ?",
+  //});
   const threadMessages = await openai.beta.threads.messages.list(
-    "thread_Ms5HglSVX3bc2ccMZC2nEY6m"
+    "thread_xX3PwM3ES1dldtiqHy9wxTTP"
   );
-
-  const run = await openai.beta.threads.runs.retrieve(
-    "thread_Ms5HglSVX3bc2ccMZC2nEY6m",
-    "run_6ojhu9dPv3q7N1LSLC2vu615"
-  );
-  console.log(run);
+  for (const message of threadMessages.data) {
+    console.log(message.content);
+  }
+  debugger;
 }
 
 export default main;
