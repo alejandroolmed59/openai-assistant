@@ -50,15 +50,24 @@ async function main() {
   let newStateOfDevices = structuredClone(initialState);
   const run = await createRun(myAssistant.id, thread.id);
   if (run.status === "completed") {
-    console.log("all up to date!");
+    return {
+      action: "complete",
+      devices: newStateOfDevices,
+    };
   } else if (run.status === "requires_action") {
     const functions = run.required_action?.submit_tool_outputs.tool_calls;
     const mappedFunctions = functions?.map<ToolOutput>((openAiFunction) => {
       if (openAiFunction.function.name === "update_device") {
         const args: {
           deviceId: string;
-          changingProperties: { propertyKey: string; propertyValue: string }[];
+          changingProperties: {
+            propertyKey: string;
+            propertyValue: string;
+          }[];
         } = JSON.parse(openAiFunction.function.arguments);
+        console.log(
+          `Arguments determined for update_device by gpt-4: ${JSON.stringify(args)}`
+        );
         const deviceChanging = newStateOfDevices.find(
           (device) => Number(device.id) === Number(args.deviceId)
         );
@@ -85,6 +94,9 @@ async function main() {
         const args: { deviceId: string } = JSON.parse(
           openAiFunction.function.arguments
         );
+        console.log(
+          `Arguments determined for get_device_status by gpt-4: ${JSON.stringify(args)}`
+        );
         return {
           tool_call_id: openAiFunction.id,
           output: JSON.stringify({
@@ -101,18 +113,25 @@ async function main() {
         };
       }
     });
-    if (!mappedFunctions) return;
-    const submitOutput = await openai.beta.threads.runs.submitToolOutputs(
-      thread.id,
-      run.id,
-      {
-        tool_outputs: mappedFunctions,
-      }
-    );
+    if (!mappedFunctions)
+      throw new Error("No actions present in required_action run status");
+    const submitOutput =
+      await openai.beta.threads.runs.submitToolOutputsAndPoll(
+        thread.id,
+        run.id,
+        {
+          tool_outputs: mappedFunctions,
+        }
+      );
+    console.log(`new State of devices: ${JSON.stringify(newStateOfDevices)}`);
     const threadMessages = await openai.beta.threads.messages.list(thread.id);
-    for (const message of threadMessages.data) {
-      console.log(message.content);
-    }
+    const mappedMessages = threadMessages.data.map((messageObject: any) => {
+      return {
+        role: messageObject.role,
+        message: messageObject.content[0].text.value,
+      };
+    });
+    console.log(JSON.stringify(mappedMessages));
     debugger;
   } else {
     console.log(run.status);

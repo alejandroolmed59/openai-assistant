@@ -4,7 +4,7 @@
     "deviceType": "smartplug",
     "deviceProperties": {
       "deviceName": "SmartPlug living room",
-      "description": "Usado para darle electricidad a mi arbol de navidad en navidades o lampara de la sala",
+      "description": "Used to power my Christmas tree at Christmas, also used for my living room lamp!",
       "switch": "ON"
     }
   },
@@ -12,10 +12,10 @@
     "id": 2,
     "deviceType": "thermostat",
     "deviceProperties": {
-      "deviceName": "Mi termostato",
-      "description": "En verano gasta mas electricidad de la necesaria al esta encendido todo el dia",
+      "deviceName": "Home's thermostat",
+      "description": "In summer it uses more electricity than necessary by being on all day. We're in winter right now so it'll probably be set very hot a couple of months",
       "mode": "HEAT",
-      "temperature": 32,
+      "temperature": "32",
       "switch": "ON"
     }
   },
@@ -23,8 +23,8 @@
     "id": 3,
     "deviceType": "smartplug",
     "deviceProperties": {
-      "deviceName": "SmartPlug cargador movil",
-      "description": "Usado para darle electricidad a telefono celular, lo tengo enchufado en mi habitacion",
+      "deviceName": "My smartphone plug",
+      "description": "Used to power my phone, I have it plugged in in my room on the left wall",
       "switch": "OFF"
     }
   },
@@ -32,8 +32,8 @@
     "id": 4,
     "deviceType": "smartbulb",
     "deviceProperties": {
-      "deviceName": "Bombilla de mi habitacion",
-      "description": "Cuando estoy aburrido puedo simular tener una disco en mi propia habitacion",
+      "deviceName": "My bedroom bulb",
+      "description": "Honestly one of the most usefull things I have ever been gifted! I can change the colors depending on my mood",
       "color": "#6a00c9",
       "switch": "ON"
     }
